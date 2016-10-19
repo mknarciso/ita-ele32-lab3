@@ -1,6 +1,7 @@
 package lab3;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
 
 public class Codificador {
 	public static String texto;
@@ -12,10 +13,11 @@ public class Codificador {
     private int[] bits4 = new int[2032];
     private int[] cs = {0,0,0,0,0,0};
     private int[] ss = {1,1,1,1, 1,1,1,1};
+    public static String compactado = "";
     
 	public static void lerTexto(String file){
 		try {
-			BufferedReader br = new BufferedReader(new FileReader(file));
+			BufferedReader br = new BufferedReader(new FileReader(file+".txt"));
 		    String line;
 		    while ((line = br.readLine()) != null) {
 		       texto = texto + line;
@@ -45,6 +47,9 @@ public class Codificador {
 	}
 	
     public void convolute(){
+        for(int j = 0; j < 6; j++){
+	       cs[j] = 0;
+        }
         for(int i =0; i<1000; i++){
             bits2[2*i]   =(bitsIn[i]+cs[0]+cs[1]+cs[2]+cs[5])%2;
             bits2[2*i+1] =(bitsIn[i]+cs[1]+cs[2]+cs[4]+cs[5])%2;
@@ -67,6 +72,9 @@ public class Codificador {
     }
     
     public void scramble(){
+		for(int j = 0; j < 8; j++){
+	       ss[j] = 0;
+	    }
         for(int i=0;i<2032;i++){
             bits4[i]=(bits3[i]+ss[7])%2;
             ss[0]=(ss[0]+ss[2]+ss[4]+ss[7])%2;
@@ -81,17 +89,41 @@ public class Codificador {
         }
     }
 
-	 /*public void armazenaEmHexadecimal (){
+	 public void armazenaEmHexadecimal (){
 		 int a;
-		 String 
+		 String aux = "";
 		 for (int i = 0; i <508; i ++){
 			 a = 1000*bits4[i] + 100* bits4[i+1] + 10*bits4[i+2] + bits4[i+4];
-			 
+			 aux = aux + Integer.toHexString(a);
 		 }
-		 
-	 }*/
+		 compactado = compactado + aux;
+	 }
+	 
+	 
+	 public void criaTxtHexadecimal (String filename){
+		 try(  PrintWriter out = new PrintWriter( filename+"_out.txt" )  ){
+			    out.println( Codificador.compactado );
+		}
+		 catch (Exception e){
+				System.out.println("Deu ruim!");
+		}
+	 }
     
-    public void run(){
-        
+    public void run(String file){
+        lerTexto(file);
+        do{
+            gerarBitsIn();
+            convolute();
+            addHeader();
+            scramble();
+            armazenaEmHexadecimal();
+            texto = texto.substring(1000);
+        } while (texto.length()>1000);
+        criaTxtHexadecimal(file);
+    }
+    
+    public static void main(String args[]){
+        Codificador cod = new Codificador();
+        cod.run("teste");
     }
 }

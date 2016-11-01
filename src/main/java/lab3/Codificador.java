@@ -33,15 +33,16 @@ public class Codificador {
 		char aux;
 		int a = texto.length();
 		if(a < posicao + 1000){
-			for(int i = 0; i < posicao + 10000- a; i ++){
-				texto = texto+ "0";
+			for(int i = 0; i < posicao + 1000- a; i ++){
+				texto = texto + "0";
 			}
 		}
 		for (int i = 0; i < 1000; i ++){
 			aux = texto.charAt(posicao + i);
 			if(aux == '1')
 				bitsIn[i] = 1;
-			else bitsIn[i] = 0;
+			else if(aux == '0') 
+				bitsIn[i] = 0;
 		}
 		posicao = posicao + 1000;
 	}
@@ -63,17 +64,18 @@ public class Codificador {
     }
     
     public void addHeader(){
-        for(int i=0;i<2000;i++){
-            bits3[i]=bits2[i];
-        }
         for(int i=0;i<32;i++){
-            bits3[2000+i]=header[i];
+            bits3[i]=header[i];
         }
+        for(int i=0;i<2000;i++){
+            bits3[32+i]=bits2[i];
+        }
+
     }
     
     public void scramble(){
 		for(int j = 0; j < 8; j++){
-	       ss[j] = 0;
+	       ss[j] = 1;
 	    }
         for(int i=0;i<2032;i++){
             bits4[i]=(bits3[i]+ss[7])%2;
@@ -92,13 +94,47 @@ public class Codificador {
 	 public void armazenaEmHexadecimal (){
 		 int a;
 		 String aux = "";
-		 for (int i = 0; i <508; i ++){
-			 a = 1000*bits4[i] + 100* bits4[i+1] + 10*bits4[i+2] + bits4[i+4];
-			 aux = aux + Integer.toHexString(a);
+		 for (int i = 0; i <507; i ++){
+			 a = 1000*bits4[4*i] + 100* bits4[4*i+1] + 10*bits4[4*i+2] + bits4[4*i+3];
+			 aux = aux + stringHexadecimal(a);
+			
 		 }
 		 compactado = compactado + aux;
 	 }
 	 
+	 public String stringHexadecimal(int a){
+		 if(a == 0000)
+			 return "0";
+		 else if (a == 0001)
+			 return "1";
+		 else if (a == 0010)
+			 return "2";
+		 else if (a == 0011)
+			 return "3";
+		 else if (a == 0100)
+			 return "4";
+		 else if (a == 0101)
+			 return "5";
+		 else if (a == 0110)
+			 return "6";
+		 else if (a == 0111)
+			 return "7";
+		 else if (a == 1000)
+			 return "8";
+		 else if (a == 1001)
+			 return "9";
+		 else if (a == 1010)
+			 return "a";
+		 else if (a == 1011)
+			 return "b";
+		 else if (a == 1100)
+			 return "c";
+		 else if (a == 1101)
+			 return"d";
+		 else if (a == 1111)
+			 return "e";
+		 return null;
+	 }
 	 
 	 public void criaTxtHexadecimal (String filename){
 		 try(  PrintWriter out = new PrintWriter( filename+"_out.txt" )  ){
@@ -111,14 +147,13 @@ public class Codificador {
     
     public void run(String file){
         lerTexto(file);
-        do{
+        while (posicao != texto.length()){
             gerarBitsIn();
             convolute();
-            addHeader();
+            addHeader();            
             scramble();
             armazenaEmHexadecimal();
-            texto = texto.substring(1000);
-        } while (texto.length()>1000);
+        }
         criaTxtHexadecimal(file);
     }
     
